@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Bar Chart</title>
+  <script src="node_modules/d3/build/d3.min.js"></script>
+  <script src="node_modules/d3-axis/build/d3-axis.min.js"></script>
+  <!-- <script src="https://d3js.org/d3.v4.min.js"></script> -->
+  <style>
+    svg rect {
+      fill: gray;
+    }
+
+    svg text {
+      fill: yellow;
+      font: 12px sans-serif;
+      text-anchor: end;
+    }
+
+    .graph-container {
+      display: flex;
+      width: 100%;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>US GDP</h1>
+  <div class="graph-container"></div>
+
+  <script>
+    // populate data set
+    var data = [10, 5, 12, 15, 4, 19];
+    // get max value
+    var max = data.reduce(function (a, b) {
+      return Math.max(a, b);
+    });
+    console.log(max)
+    var height = 300,
+      scaleFactor = height / max,
+      barWidth = 30,
+      width = barWidth * data.length;
+
+    var graph = d3.select(".graph-container")
+      .append("svg")
+      .attr("height", height)
+      .attr("width", width)
+      .attr("class", "graph");
+
+    // align elements horizontally
+    var bar = graph.selectAll("g")
+      .data(data)
+      .enter()
+      .append("g")
+      .attr("transform", function (d, i) {
+        return "translate(" + i * barWidth + ", " + (height - d * scaleFactor) + ")";
+      });
+
+    // assign height and width
+    bar.append("rect")
+      .attr("height", function (d) {
+        return d * scaleFactor;
+      })
+      .attr("width", barWidth - 1);
+
+    // add labels to each bar
+    bar.append("text")
+      .attr("y", function (d) {
+        return (d * scaleFactor);
+      })
+      .attr("x", barWidth / 2)
+      .attr("dx", ".35em")
+      .attr("dy", "-1em")
+      .text(function (d) {
+        return d;
+      });
+
+    // add graph axes
+    var x = d3.scaleTime().range([0, width]);
+    var y = d3.scaleLinear().range([height, 0]);
+
+    graph.append("g")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x));
+  </script>
+</body>
+
+</html>
