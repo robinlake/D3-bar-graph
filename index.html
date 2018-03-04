@@ -10,87 +10,111 @@
   <script src="node_modules/d3-axis/build/d3-axis.min.js"></script>
   <!-- <script src="https://d3js.org/d3.v4.min.js"></script> -->
   <style>
-    svg rect {
-      fill: gray;
+    .axis text {
+      font: 10px sans-serif;
     }
 
-    svg text {
-      fill: yellow;
-      font: 12px sans-serif;
-      text-anchor: end;
-    }
-
-    .graph-container {
-      display: flex;
-      width: 100%;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    h1 {
-      text-align: center;
+    .axis path,
+    .axis line {
+      fill: none;
+      stroke: #000;
+      shape-rendering: crispEdges;
     }
   </style>
 </head>
 
 <body>
   <h1>US GDP</h1>
-  <div class="graph-container"></div>
-
+  <div id="chart"></div>
   <script>
-    // populate data set
-    var data = [10, 5, 12, 15, 4, 19];
-    // get max value
-    var max = data.reduce(function (a, b) {
-      return Math.max(a, b);
-    });
-    console.log(max)
-    var height = 300,
-      scaleFactor = height / max,
-      barWidth = 30,
-      width = barWidth * data.length;
+    var myData = [10, 20, 40, 500, 360, 20, 8, 260, 1, 20, 30, 48, 600];
 
-    var graph = d3.select(".graph-container")
-      .append("svg")
-      .attr("height", height)
-      .attr("width", width)
-      .attr("class", "graph");
+    var height = 500;
+    var width = 500;
 
-    // align elements horizontally
-    var bar = graph.selectAll("g")
-      .data(data)
-      .enter()
-      .append("g")
-      .attr("transform", function (d, i) {
-        return "translate(" + i * barWidth + ", " + (height - d * scaleFactor) + ")";
-      });
+    var tooltip = d3.select('body').append('div')
+      .style('position', 'absolute')
+      .style('background', '#f4f4f4')
+      .style('padding', '5 15px')
+      .style('border', '1px #333 solid')
+      .style('border-radius', '5px')
+      .style('opacity', '0')
 
-    // assign height and width
-    bar.append("rect")
-      .attr("height", function (d) {
-        return d * scaleFactor;
-      })
-      .attr("width", barWidth - 1);
+    var yScale = d3.scaleLinear();
+    yScale.domain([0, d3.max(myData)]);
+    yScale.range([0, height]);
 
-    // add labels to each bar
-    bar.append("text")
-      .attr("y", function (d) {
-        return (d * scaleFactor);
-      })
-      .attr("x", barWidth / 2)
-      .attr("dx", ".35em")
-      .attr("dy", "-1em")
-      .text(function (d) {
-        return d;
-      });
+    var xScale = d3.scaleBand();
+    xScale.domain(d3.range(0, myData.length));
+    xScale.range([0, width]);
 
-    // add graph axes
-    var x = d3.scaleTime().range([0, width]);
-    var y = d3.scaleLinear().range([height, 0]);
+    var colorScale = d3.scaleLinear();
+    colorScale.domain([0, myData.length]);
+    colorScale.range(['rgb(255, 0, 0)', 'rgb(0, 255, 0)']);
 
-    graph.append("g")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x));
+    var myChart;
+
+    function draw() {
+      myChart = d3.select('#chart').append('svg')
+        .attr('width', width)
+        .attr('height', height)
+        .style('background', '#f4f4f4');
+
+      myChart.selectAll('rect')
+        .data(myData)
+        .enter().append('rect')
+        .style('fill', function (d, i) {
+          return colorScale(i);
+        })
+        .attr('width', xScale.bandwidth())
+        .attr('x', function (d, i) {
+          return xScale(i);
+        })
+        .attr('height', function (d) {
+          return yScale(d);
+        })
+        .attr('y', function (d) {
+          return height - yScale(d);
+        })
+        .on('mouseover', (d) => {
+          tooltip.transition()
+            .style('opacity', 1)
+
+          tooltip.html(d)
+            .style('left', (d3.event.pageX) + 'px')
+            .style('top', (d3.event.pageY) + 'px')
+          d3.select(this).style('opacity', 0.5)
+        })
+        .on('mouseout', (d) => {
+          tooltip.transition()
+            .style('opacity', 0)
+          d3.select(this).style('opacity', 1)
+        })
+
+
+      var xAxis = d3.axisBottom()
+        .scale(xScale)
+
+      var yAxis = d3.axisLeft()
+        .scale(yScale);
+
+      d3.select('#chart').append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis);
+
+      d3.select('#chart').append("g")
+        .attr("class", "x axis")
+        .call(yAxis);
+
+    }
+
+
+
+
+    window.onload = function () {
+      draw();
+    };
   </script>
 </body>
 
