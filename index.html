@@ -9,6 +9,7 @@
   <!-- <script src="node_modules/d3/build/d3.min.js"></script> -->
   <!-- <script src="node_modules/d3-axis/build/d3-axis.min.js"></script> -->
   <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.18.0/axios.min.js"></script>
   <style>
     .bar {
       fill: steelblue;
@@ -39,43 +40,97 @@
   <h1>US GDP</h1>
   <div id="chart"></div>
   <script>
-    var margin = {
-        top: 20,
-        right: 20,
-        bottom: 30,
-        left: 40
-      },
-      width = 960 - margin.left - margin.right,
-      height = 500 - margin.top - margin.bottom;
+    var data;
+    axios.get('https://raw.githubusercontent.com/FreeCodeCamp/ProjectReferenceData/master/GDP-data.json')
+      .then(function (response) {
+        data = response.data.data
+        dataSmall = data.slice(0, 10)
+        init();
+      })
 
-    var x = d3.scaleBand()
-      .range([0, width]).round(true).padding(.1);
+    function init() {
+      var margin = {
+          top: 20,
+          right: 20,
+          bottom: 30,
+          left: 40
+        },
+        width = 960 - margin.left - margin.right,
+        height = 500 - margin.top - margin.bottom;
 
-    var y = d3.scaleLinear()
-      .range([height, 0]);
+      var x = d3.scaleBand()
+        .range([0, width]).round(true).padding(.1);
 
-    var xAxis = d3.axisBottom()
-      .scale(x);
+      var y = d3.scaleLinear()
+        .range([height, 0]);
 
-    var yAxis = d3.axisLeft()
-      .scale(y)
-      .ticks(10, "%");
+      var xAxis = d3.axisBottom()
+        .scale(x);
 
-    var svg = d3.select("body").append("svg")
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-      .append("g")
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+      var yAxis = d3.axisLeft()
+        .scale(y)
+        .ticks(10);
 
-    d3.tsv("data.tsv", type, function (error, data) {
-      if (error) throw error;
+      var svg = d3.select("body").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-      x.domain(data.map(function (d) {
-        return d.letter;
+      // d3.tsv("data.tsv", type, function (error, data) {
+      //   if (error) throw error;
+
+      //   x.domain(data.map(function (d) {
+      //     return d.letter;
+      //   }));
+      //   y.domain([0, d3.max(data, function (d) {
+      //     return d.frequency;
+      //   })]);
+
+      //   svg.append("g")
+      //     .attr("class", "x axis")
+      //     .attr("transform", "translate(0," + height + ")")
+      //     .call(xAxis);
+
+      //   svg.append("g")
+      //     .attr("class", "y axis")
+      //     .call(yAxis)
+      //     .append("text")
+      //     .attr("transform", "rotate(-90)")
+      //     .attr("y", 6)
+      //     .attr("dy", ".71em")
+      //     .style("text-anchor", "end")
+      //     .text("Frequency");
+
+      //   svg.selectAll(".bar")
+      //     .data(data)
+      //     .enter().append("rect")
+      //     .attr("class", "bar")
+      //     .attr("x", function (d) {
+      //       return x(d.letter);
+      //     })
+      //     .attr("width", x.bandwidth())
+      //     .attr("y", function (d) {
+      //       return y(d.frequency);
+      //     })
+      //     .attr("height", function (d) {
+      //       return height - y(d.frequency);
+      //     });
+      // });
+
+      function type(d) {
+        d.frequency = +d.frequency;
+        return d;
+      }
+
+      x.domain(dataSmall.map(function (d) {
+        return d[0];
       }));
-      y.domain([0, d3.max(data, function (d) {
-        return d.frequency;
+      console.log(x.domain)
+      y.domain([0, d3.max(dataSmall, function (d) {
+        return d[1];
       })]);
+      console.log(y.domain)
 
       svg.append("g")
         .attr("class", "x axis")
@@ -93,24 +148,22 @@
         .text("Frequency");
 
       svg.selectAll(".bar")
-        .data(data)
+        .data(dataSmall)
         .enter().append("rect")
         .attr("class", "bar")
         .attr("x", function (d) {
-          return x(d.letter);
+          return x(d[0]);
         })
         .attr("width", x.bandwidth())
         .attr("y", function (d) {
-          return y(d.frequency);
+          return y(d[1]);
         })
         .attr("height", function (d) {
-          return height - y(d.frequency);
-        });
-    });
 
-    function type(d) {
-      d.frequency = +d.frequency;
-      return d;
+          return height - y(d[1]);
+        });
+
+
     }
   </script>
 </body>
