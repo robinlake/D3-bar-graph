@@ -6,11 +6,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Bar Chart</title>
-  <script src="node_modules/d3/build/d3.min.js"></script>
-  <script src="node_modules/d3-axis/build/d3-axis.min.js"></script>
-  <!-- <script src="https://d3js.org/d3.v4.min.js"></script> -->
+  <!-- <script src="node_modules/d3/build/d3.min.js"></script> -->
+  <!-- <script src="node_modules/d3-axis/build/d3-axis.min.js"></script> -->
+  <script src="https://d3js.org/d3.v4.min.js"></script>
   <style>
-    .axis text {
+    .bar {
+      fill: steelblue;
+    }
+
+    .bar:hover {
+      fill: brown;
+    }
+
+    .axis {
       font: 10px sans-serif;
     }
 
@@ -20,6 +28,10 @@
       stroke: #000;
       shape-rendering: crispEdges;
     }
+
+    .x.axis path {
+      display: none;
+    }
   </style>
 </head>
 
@@ -27,94 +39,79 @@
   <h1>US GDP</h1>
   <div id="chart"></div>
   <script>
-    var myData = [10, 20, 40, 500, 360, 20, 8, 260, 1, 20, 30, 48, 600];
+    var margin = {
+        top: 20,
+        right: 20,
+        bottom: 30,
+        left: 40
+      },
+      width = 960 - margin.left - margin.right,
+      height = 500 - margin.top - margin.bottom;
 
-    var height = 500;
-    var width = 500;
+    var x = d3.scaleBand()
+      .range([0, width]).round(true).padding(.1);
 
-    var tooltip = d3.select('body').append('div')
-      .style('position', 'absolute')
-      .style('background', '#f4f4f4')
-      .style('padding', '5 15px')
-      .style('border', '1px #333 solid')
-      .style('border-radius', '5px')
-      .style('opacity', '0')
+    var y = d3.scaleLinear()
+      .range([height, 0]);
 
-    var yScale = d3.scaleLinear();
-    yScale.domain([0, d3.max(myData)]);
-    yScale.range([0, height]);
+    var xAxis = d3.axisBottom()
+      .scale(x);
 
-    var xScale = d3.scaleBand();
-    xScale.domain(d3.range(0, myData.length));
-    xScale.range([0, width]);
+    var yAxis = d3.axisLeft()
+      .scale(y)
+      .ticks(10, "%");
 
-    var colorScale = d3.scaleLinear();
-    colorScale.domain([0, myData.length]);
-    colorScale.range(['rgb(255, 0, 0)', 'rgb(0, 255, 0)']);
+    var svg = d3.select("body").append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    var myChart;
+    d3.tsv("data.tsv", type, function (error, data) {
+      if (error) throw error;
 
-    function draw() {
-      myChart = d3.select('#chart').append('svg')
-        .attr('width', width)
-        .attr('height', height)
-        .style('background', '#f4f4f4');
+      x.domain(data.map(function (d) {
+        return d.letter;
+      }));
+      y.domain([0, d3.max(data, function (d) {
+        return d.frequency;
+      })]);
 
-      myChart.selectAll('rect')
-        .data(myData)
-        .enter().append('rect')
-        .style('fill', function (d, i) {
-          return colorScale(i);
-        })
-        .attr('width', xScale.bandwidth())
-        .attr('x', function (d, i) {
-          return xScale(i);
-        })
-        .attr('height', function (d) {
-          return yScale(d);
-        })
-        .attr('y', function (d) {
-          return height - yScale(d);
-        })
-        .on('mouseover', (d) => {
-          tooltip.transition()
-            .style('opacity', 1)
-
-          tooltip.html(d)
-            .style('left', (d3.event.pageX) + 'px')
-            .style('top', (d3.event.pageY) + 'px')
-          d3.select(this).style('opacity', 0.5)
-        })
-        .on('mouseout', (d) => {
-          tooltip.transition()
-            .style('opacity', 0)
-          d3.select(this).style('opacity', 1)
-        })
-
-
-      var xAxis = d3.axisBottom()
-        .scale(xScale)
-
-      var yAxis = d3.axisLeft()
-        .scale(yScale);
-
-      d3.select('#chart').append("g")
+      svg.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + height + ")")
         .call(xAxis);
 
-      d3.select('#chart').append("g")
-        .attr("class", "x axis")
-        .call(yAxis);
+      svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis)
+        .append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 6)
+        .attr("dy", ".71em")
+        .style("text-anchor", "end")
+        .text("Frequency");
 
+      svg.selectAll(".bar")
+        .data(data)
+        .enter().append("rect")
+        .attr("class", "bar")
+        .attr("x", function (d) {
+          return x(d.letter);
+        })
+        .attr("width", x.bandwidth())
+        .attr("y", function (d) {
+          return y(d.frequency);
+        })
+        .attr("height", function (d) {
+          return height - y(d.frequency);
+        });
+    });
+
+    function type(d) {
+      d.frequency = +d.frequency;
+      return d;
     }
-
-
-
-
-    window.onload = function () {
-      draw();
-    };
   </script>
 </body>
 
