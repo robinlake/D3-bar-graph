@@ -41,10 +41,16 @@
   <div id="chart"></div>
   <script>
     var data;
+    var fromDate;
+    var toDate;
     axios.get('https://raw.githubusercontent.com/FreeCodeCamp/ProjectReferenceData/master/GDP-data.json')
       .then(function (response) {
-        data = response.data.data
-        dataSmall = data.slice(0, 10)
+        console.log(response)
+        // data = response.data.data
+        dataSmall = response.data.data
+        // dataSmall = data.slice(50, 90)
+        fromDate = new Date(response.data.from_date);
+        toDate = new Date(response.data.to_date);
         init();
       })
 
@@ -58,18 +64,26 @@
         width = 960 - margin.left - margin.right,
         height = 500 - margin.top - margin.bottom;
 
-      var x = d3.scaleBand()
-        .range([0, width]).round(true).padding(.1);
+      // var x = d3.scaleBand()
+      //   .range([0, width]).round(true).padding(.1);
+      var x = d3.scaleTime().range([0, width])
+        .domain([new Date(1945, 0), new Date(2015, 0)])
+
+      console.log(x)
+
+      var xScale = d3.scaleTime().range([0, width])
+        .domain([fromDate, toDate])
 
       var y = d3.scaleLinear()
         .range([height, 0]);
 
       var xAxis = d3.axisBottom()
-        .scale(x);
+        .scale(xScale)
+        .ticks(8);
 
       var yAxis = d3.axisLeft()
         .scale(y)
-        .ticks(10);
+        .ticks(5);
 
       var svg = d3.select("body").append("svg")
         .attr("width", width + margin.left + margin.right)
@@ -126,6 +140,7 @@
       x.domain(dataSmall.map(function (d) {
         return d[0];
       }));
+      x.domain()
       console.log(x.domain)
       y.domain([0, d3.max(dataSmall, function (d) {
         return d[1];
@@ -151,15 +166,16 @@
         .data(dataSmall)
         .enter().append("rect")
         .attr("class", "bar")
-        .attr("x", function (d) {
-          return x(d[0]);
+        .attr("x", function (d, i) {
+          console.log(dataSmall.length)
+          return i * (width / dataSmall.length);
         })
-        .attr("width", x.bandwidth())
+        // .attr("width", x.bandwidth())
+        .attr("width", width / dataSmall.length)
         .attr("y", function (d) {
           return y(d[1]);
         })
         .attr("height", function (d) {
-
           return height - y(d[1]);
         });
 
